@@ -18,7 +18,6 @@ public import Mathlib.Analysis.SpecialFunctions.Exponential
 public import Formalism.RealPlaceAnalysis.SmoothOnGVIff
 public import Formalism.RealPlaceAnalysis.RealPlaceTaylor.MemUnitaryGroupIffMulConjTranspose
 public import ReciprocityTheory.ReductiveGroups.DiscreteSeries.HighestWeights.ContinuousRepresentations.RelOpCurve
-import all ReciprocityTheory.ReductiveGroups.DiscreteSeries.HighestWeights.ContinuousRepresentations.RelOpCurve
 public import ReciprocityTheory.ReductiveGroups.DiscreteSeries.HighestWeights.ContinuousRepresentations.URepHom
 public import ReciprocityTheory.ReductiveGroups.DiscreteSeries.HighestWeights.FromHC
 import Formalism.RealPlaceAnalysis.RealPlaceTaylor.IsCompactInvariantCompactSpan
@@ -415,22 +414,6 @@ open ReciprocityTheory.ChartRestriction.DS ReciprocityTheory.ChartRestriction.DS
 
 variable {n : ℕ}
 
-theorem KRep.op_curve {ε : Fin n → Bool} (R : KRep ε)
-    {X : Matrix (Fin n) (Fin n) ℂ} (hX : inK ε X) (γ : ℝ → KG ε)
-    (hγ : ∀ t : ℝ, toMK (γ t) = NormedSpace.exp ((t : ℂ) • X)) (t : ℝ) :
-    R.op (γ t) = NormedSpace.exp ((t : ℂ) • R.dτ X) := by
-  apply _root_.ReciprocityTheory.ChartRestriction.DS.HW.KRep.rel_op_curve <;> assumption
-
-theorem KRep.op_eq_exp {ε : Fin n → Bool} (R : KRep ε) (k : KG ε) :
-    ∃ Y : Matrix (Fin n) (Fin n) ℂ, inK ε Y ∧ R.op k = NormedSpace.exp (R.dτ Y) := by
-  obtain ⟨Y, hY, hk⟩ := exists_log ε k
-  obtain ⟨γ, hγ⟩ := exists_curve ε hY
-  have h1 : γ 1 = k := by
-    apply onep_KG_ext
-    rw [hγ 1, hk, Complex.ofReal_one, one_smul]
-  refine ⟨Y, hY, ?_⟩
-  rw [← h1, R.op_curve hY γ hγ 1, Complex.ofReal_one, one_smul]
-
 theorem KRep.dτ_stable_of_stable {ε : Fin n → Bool} (R : KRep ε)
     (W : Submodule ℂ R.V) (hW : ∀ k : KG ε, ∀ v ∈ W, R.op k v ∈ W) :
     ∀ a b, ε a = ε b → ∀ v ∈ W, R.dτ (Matrix.single a b 1) v ∈ W := by
@@ -471,7 +454,8 @@ theorem KRep.stable_of_dτ_stable {ε : Fin n → Bool} (R : KRep ε) (W : Submo
     (hW : ∀ a b, ε a = ε b → ∀ v ∈ W, R.dτ (Matrix.single a b 1) v ∈ W) :
     ∀ k : KG ε, ∀ v ∈ W, R.op k v ∈ W := by
   intro k v hv
-  obtain ⟨Y, hY, hk⟩ := R.op_eq_exp k
+  obtain ⟨Y, hY, hk⟩ := pre_op_eq_exp' R.τ R.dτ R.hasDeriv k
+  change R.op k = _ at hk
   rw [hk]
   refine exp_mem_of_stable W (R.dτ Y) ?_ v hv
   intro w hw
